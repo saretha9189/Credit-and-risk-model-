@@ -1,0 +1,5 @@
+scikit-learn>=1.4
+pandas>=2.0
+numpy>=1.26
+scipy
+xlrd>=2.0.1  # only needed if you want to read the original .xls variable list

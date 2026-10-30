@@ -1,0 +1,526 @@
+<title>Credit Risk Studio</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: slim header with model scores, then five full-width panels, each = short text + controls on the left, a 3D chart on the right. */
+:root {
+  --bg: #fcf4fa;
+  --surface: #ffffff;
+  --surface-2: #f7e8f4;
+  --ink: #2b1640;
+  --muted: #6c5683;
+  --line: #ead4e8;
+  --pink: #e8559f;
+  --orchid: #b366d9;
+  --violet: #7a3fb5;
+  --lilac: #c5a6ee;
+  --blush: #fad0e6;
+  --font-display: "Bricolage Grotesque", "DM Sans", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #150b21; --surface: #211233; --surface-2: #2c1a43; --ink: #f8e9fa; --muted: #bba0d4;
+    --line: #3d2758; --pink: #ff7cbf; --orchid: #cb8cf2; --violet: #a96ee6; --lilac: #b896ee; --blush: #5a2a56;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #150b21; --surface: #211233; --surface-2: #2c1a43; --ink: #f8e9fa; --muted: #bba0d4;
+  --line: #3d2758; --pink: #ff7cbf; --orchid: #cb8cf2; --violet: #a96ee6; --lilac: #b896ee; --blush: #5a2a56;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.55;
+  padding-block: 0 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.inner { max-width: 1240px; margin: 0 auto; }
+h1, h2 { font-family: var(--font-display); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(2.2rem, 5.4vw, 3.8rem); line-height: 1.02; font-weight: 700; }
+h2 { font-size: clamp(1.45rem, 2.6vw, 2rem); line-height: 1.1; font-weight: 700; }
+p { margin: 0; }
+.mono, td, th, .kpi b, .readout b { font-variant-numeric: tabular-nums; }
+
+/* header */
+.top {
+  padding-block: 40px 28px;
+  background:
+    radial-gradient(60% 120% at 92% 0%, color-mix(in srgb, var(--pink) 22%, transparent), transparent 70%),
+    radial-gradient(50% 100% at 0% 100%, color-mix(in srgb, var(--orchid) 20%, transparent), transparent 70%);
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding-inline: max(16px, env(safe-area-inset-left, 0px));
+}
+.top .inner { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 32px; align-items: end; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--violet); margin-bottom: 14px; }
+.lede { color: var(--muted); max-width: 52ch; margin-top: 16px; font-size: 1.05rem; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 20px; font-size: 0.88rem; color: var(--muted); }
+.facts span b { color: var(--ink); font-weight: 700; }
+.scores { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.scores caption { text-align: left; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding-bottom: 8px; }
+.scores th, .scores td { padding: 9px 10px; text-align: right; border-bottom: 1px solid var(--line); }
+.scores th:first-child, .scores td:first-child { text-align: left; padding-left: 0; }
+.scores th { font-weight: 500; color: var(--muted); font-size: 0.78rem; }
+.scores td.hi { color: var(--pink); font-weight: 700; }
+.scores-wrap { overflow-x: auto; }
+.btn {
+  font: inherit; font-size: 0.88rem; font-weight: 500; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; cursor: pointer; min-height: 40px;
+}
+.btn:hover { border-color: var(--orchid); }
+.btn[aria-pressed="true"] { background: var(--violet); border-color: var(--violet); color: #fff; }
+.btn:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
+.topbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 18px; }
+.topbar small { color: var(--muted); }
+
+/* panels */
+.panel { display: grid; grid-template-columns: minmax(240px, 340px) minmax(0, 1fr); gap: 32px; padding-block: 44px; border-bottom: 1px solid var(--line); }
+.panel:last-of-type { border-bottom: 0; }
+.copy { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.copy p { color: var(--muted); }
+.copy .take { color: var(--ink); }
+.tag { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--orchid); }
+.controls { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+.controls label { display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; color: var(--muted); font-family: var(--font-mono); letter-spacing: 0.04em; }
+.row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+select {
+  font: inherit; font-size: 0.88rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 8px 8px; min-height: 40px; width: 100%; min-width: 0; font-family: var(--font-body);
+}
+input[type="range"] { width: 100%; accent-color: var(--pink); min-height: 28px; }
+.plot {
+  background: radial-gradient(90% 80% at 50% 40%, var(--surface), var(--surface-2));
+  border: 1px solid var(--line); border-radius: 22px; min-width: 0; overflow: hidden; position: relative;
+}
+.plot > div { width: 100%; height: 100%; min-height: 560px; }
+.readouts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.readout { border-top: 2px solid var(--pink); padding-top: 6px; }
+.readout b { display: block; font-family: var(--font-display); font-size: 1.6rem; line-height: 1.1; }
+.readout span { font-size: 0.78rem; color: var(--muted); }
+ol.drivers { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.86rem; }
+ol.drivers li { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr); gap: 8px; }
+ol.drivers .n { font-family: var(--font-mono); color: var(--pink); font-weight: 500; }
+ol.drivers code { font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink); word-break: break-word; }
+ol.drivers small { display: block; color: var(--muted); line-height: 1.35; }
+
+/* notes */
+.notes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; padding-top: 44px; border-top: 1px solid var(--line); }
+.notes h2 { margin-bottom: 14px; }
+.tblwrap { overflow-x: auto; }
+.dec { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.dec th, .dec td { padding: 7px 8px; text-align: right; border-bottom: 1px solid var(--line); }
+.dec th:first-child, .dec td:first-child { text-align: left; }
+.dec th { color: var(--muted); font-weight: 500; font-size: 0.76rem; }
+.bar { display: inline-block; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--lilac), var(--pink)); vertical-align: middle; }
+.steps { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 8px; color: var(--muted); font-size: 0.95rem; }
+.steps b { color: var(--ink); }
+.caveat { margin-top: 16px; padding: 12px 14px; border-left: 3px solid var(--orchid); background: var(--surface-2); border-radius: 0 10px 10px 0; font-size: 0.9rem; color: var(--ink); }
+
+@media (max-width: 900px) {
+  .top .inner, .panel, .notes { grid-template-columns: minmax(0, 1fr); }
+  .panel { gap: 20px; padding-block: 32px; }
+  .plot > div { min-height: 440px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+
+<div class="top">
+  <div class="inner">
+    <div>
+      <div class="eyebrow">Application scorecard · 3D</div>
+      <h1>Credit Risk Studio</h1>
+      <p class="lede">A default-risk model for credit card applicants, drawn in three dimensions so you can see which people the model trusts and which it does not.</p>
+      <div class="facts" id="facts"></div>
+      <div class="topbar">
+        <button class="btn" id="rotbtn" aria-pressed="true" type="button">Auto-rotate: on</button>
+        <small>Drag any chart to turn it. Scroll to zoom.</small>
+      </div>
+    </div>
+    <div class="scores-wrap">
+      <table class="scores" id="scores"></table>
+    </div>
+  </div>
+</div>
+
+<div class="inner">
+
+  <section class="panel" id="s-cloud">
+    <div class="copy">
+      <div class="tag">Applicants</div>
+      <h2>Every dot is a person</h2>
+      <p class="take" id="t-cloud"></p>
+      <p>A random 1,800 of the held-out applicants. Switch between what actually happened and what the model predicted, and swap the axes to look from another angle.</p>
+      <div class="controls">
+        <label>Colour by
+          <select id="cmode"><option value="actual">What happened</option><option value="pred">Predicted risk</option></select>
+        </label>
+        <div class="row3">
+          <label>X<select id="cx"></select></label>
+          <label>Y<select id="cy"></select></label>
+          <label>Z<select id="cz"></select></label>
+        </div>
+      </div>
+    </div>
+    <div class="plot"><div id="p-cloud" role="img" aria-label="3D scatter of applicants coloured by outcome"></div></div>
+  </section>
+
+  <section class="panel" id="s-surf">
+    <div class="copy">
+      <div class="tag">Risk surface</div>
+      <h2>Age, income and default risk</h2>
+      <p class="take" id="t-surf"></p>
+      <p>Each point is the model's average predicted default risk if every applicant had that age and income, holding the rest of their profile as it is. Move the slider to change how long they have lived at their address.</p>
+      <div class="controls">
+        <label><span id="sjl"></span><input type="range" id="sj" min="0" value="2" step="1"></label>
+        <button class="btn" id="sjplay" type="button">Play through time at address</button>
+      </div>
+    </div>
+    <div class="plot"><div id="p-surf" role="img" aria-label="3D surface of predicted default risk by age and income"></div></div>
+  </section>
+
+  <section class="panel" id="s-roc">
+    <div class="copy">
+      <div class="tag">Approval cutoff</div>
+      <h2>Where to draw the line</h2>
+      <p class="take" id="t-roc"></p>
+      <p>The curve is the model's ROC curve with the score threshold on the vertical axis. The pink marker is your cutoff: applicants scoring above it are declined.</p>
+      <div class="controls">
+        <label><span id="rcl"></span><input type="range" id="rc" min="0" step="1"></label>
+        <button class="btn" id="rcplay" type="button">Sweep the cutoff</button>
+      </div>
+      <div class="readouts" id="ro"></div>
+    </div>
+    <div class="plot"><div id="p-roc" role="img" aria-label="3D ROC curve with a movable cutoff marker"></div></div>
+  </section>
+
+  <section class="panel" id="s-bars">
+    <div class="copy">
+      <div class="tag">Segments</div>
+      <h2>Default rate by profession and occupation</h2>
+      <p class="take" id="t-bars"></p>
+      <p>Height is the share of applicants in that group who defaulted. The flat pink sheet marks the overall rate. Groups with fewer than 40 applicants are left out.</p>
+      <div class="controls"><button class="btn" id="barsreplay" type="button">Replay animation</button></div>
+    </div>
+    <div class="plot"><div id="p-bars" role="img" aria-label="3D bars of default rate by profession and occupation type"></div></div>
+  </section>
+
+  <section class="panel" id="s-drv">
+    <div class="copy">
+      <div class="tag">Drivers</div>
+      <h2>What the model leans on</h2>
+      <p class="take" id="t-drv"></p>
+      <p>Three views of the same ten variables, each scaled so its tallest bar is 1: how much the boosting model loses when the variable is shuffled, the same test for the logistic scorecard, and information value.</p>
+      <ol class="drivers" id="drvlist"></ol>
+      <div class="controls"><button class="btn" id="drvreplay" type="button">Replay animation</button></div>
+    </div>
+    <div class="plot"><div id="p-drv" role="img" aria-label="3D bars comparing variable importance across three measures"></div></div>
+  </section>
+
+  <div class="notes">
+    <div>
+      <h2>How well the scores sort people</h2>
+      <p style="color:var(--muted);margin-bottom:14px">Held-out applicants, split into ten equal groups from lowest to highest predicted risk. The predicted and actual columns should rise together.</p>
+      <div class="tblwrap"><table class="dec" id="dec"></table></div>
+    </div>
+    <div>
+      <h2>How it was built</h2>
+      <ol class="steps" id="steps"></ol>
+      <p class="caveat" id="caveat"></p>
+    </div>
+  </div>
+</div>
+
+<script id="cr-data" type="application/json">__DATA__</script>
+<script>
+(function () {
+  var D = JSON.parse(document.getElementById('cr-data').textContent);
+  var $ = function (id) { return document.getElementById(id); };
+  var css = function (n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
+  var pct = function (v, d) { return (v * 100).toFixed(d == null ? 0 : d) + '%'; };
+  var fmt = function (n) { return Number(n).toLocaleString('en-GB'); };
+  var SCALE = [[0, '#d3bff6'], [0.4, '#b77fe3'], [0.75, '#ee6bb3'], [1, '#ff3d8f']];
+  var CFG = { displayModeBar: false, responsive: true };
+  var FONT = 'DM Sans, system-ui, sans-serif';
+  var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function T() {
+    return { ink: css('--ink'), muted: css('--muted'), line: css('--line'), pink: css('--pink'),
+             violet: css('--violet'), orchid: css('--orchid'), lilac: css('--lilac'), surface: css('--surface') };
+  }
+  function axis(title, extra) {
+    var t = T();
+    return Object.assign({ title: { text: title, font: { color: t.muted, size: 12, family: FONT } },
+      tickfont: { color: t.muted, size: 10, family: FONT }, gridcolor: t.line, zerolinecolor: t.line,
+      linecolor: t.line, showbackground: false }, extra || {});
+  }
+  function cam(id, dflt) {
+    var el = $(id);
+    return (el && el.layout && el.layout.scene && el.layout.scene.camera) || { eye: dflt };
+  }
+  function layout(id, scene, dflt, extra) {
+    var t = T();
+    scene.bgcolor = 'rgba(0,0,0,0)';
+    scene.camera = cam(id, dflt);
+    return Object.assign({ paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+      margin: { l: 0, r: 0, t: 0, b: 0 }, font: { family: FONT, color: t.ink }, scene: scene,
+      showlegend: false }, extra || {});
+  }
+  function legendBox() {
+    var t = T();
+    return { x: 0.02, y: 0.98, bgcolor: 'rgba(0,0,0,0)', font: { color: t.ink, size: 12, family: FONT } };
+  }
+
+  /* ---------- header ---------- */
+  $('facts').innerHTML =
+    '<span><b>' + fmt(D.n) + '</b> applicants</span><span><b>' + pct(D.bad_rate, 1) + '</b> defaulted</span>' +
+    '<span><b>' + D.n_features + '</b> model inputs</span><span><b>' + fmt(D.n_test) + '</b> held out for testing</span>';
+  var best = D.gbm.auc >= D.lr.auc ? 'gbm' : 'lr';
+  function row(name, m, hi) {
+    var c = function (v) { return '<td' + (hi ? ' class="hi"' : '') + '>' + v + '</td>'; };
+    return '<tr><td>' + name + '</td>' + c(m.auc.toFixed(3)) + c(m.gini.toFixed(3)) + c(m.ks.toFixed(3)) + '<td>' + m.brier.toFixed(3) + '</td></tr>';
+  }
+  $('scores').innerHTML = '<caption>Test-set scores</caption><thead><tr><th>Model</th><th>AUC</th><th>Gini</th><th>KS</th><th>Brier</th></tr></thead><tbody>' +
+    row('Gradient boosting', D.gbm, best === 'gbm') + row('Logistic scorecard', D.lr, best === 'lr') + '</tbody>';
+
+  /* ---------- rotation ---------- */
+  var rotOn = !REDUCED, paused = {}, visible = {}, ROT = ['p-cloud', 'p-surf', 'p-roc', 'p-bars', 'p-drv'];
+  $('rotbtn').setAttribute('aria-pressed', String(rotOn));
+  $('rotbtn').textContent = 'Auto-rotate: ' + (rotOn ? 'on' : 'off');
+  $('rotbtn').addEventListener('click', function () {
+    rotOn = !rotOn; this.setAttribute('aria-pressed', String(rotOn)); this.textContent = 'Auto-rotate: ' + (rotOn ? 'on' : 'off');
+  });
+  var io = 'IntersectionObserver' in window ? new IntersectionObserver(function (es) {
+    es.forEach(function (e) { visible[e.target.id] = e.isIntersecting; });
+  }, { threshold: 0.2 }) : null;
+  ROT.forEach(function (id) {
+    var el = $(id); visible[id] = true; if (io) io.observe(el);
+    el.addEventListener('pointerdown', function () { paused[id] = Infinity; });
+    window.addEventListener('pointerup', function () { if (paused[id] === Infinity) paused[id] = performance.now() + 3500; });
+  });
+  var last = 0;
+  function spin(now) {
+    requestAnimationFrame(spin);
+    if (!rotOn || now - last < 50) return; last = now;
+    ROT.forEach(function (id) {
+      var el = $(id);
+      if (!visible[id] || !el.layout || !el.layout.scene || (paused[id] && paused[id] > now)) return;
+      var e = el.layout.scene.camera && el.layout.scene.camera.eye; if (!e) return;
+      var a = 0.011, x = e.x * Math.cos(a) - e.y * Math.sin(a), y = e.x * Math.sin(a) + e.y * Math.cos(a);
+      Plotly.relayout(el, { 'scene.camera.eye': { x: x, y: y, z: e.z } });
+    });
+  }
+  requestAnimationFrame(spin);
+
+  /* ---------- 1. applicant cloud ---------- */
+  var CL = { AGE: 'Age (years)', PERSONAL_MONTHLY_INCOME: 'Income, log10 R$', MONTHS_IN_RESIDENCE: 'Months at address', PERSONAL_ASSETS_VALUE: 'Assets, log10 R$', QUANT_DEPENDANTS: 'Dependants' };
+  var keys = Object.keys(CL), defaults = ['AGE', 'PERSONAL_MONTHLY_INCOME', 'MONTHS_IN_RESIDENCE'];
+  ['cx', 'cy', 'cz'].forEach(function (id, i) {
+    $(id).innerHTML = keys.map(function (k) { return '<option value="' + k + '"' + (k === defaults[i] ? ' selected' : '') + '>' + CL[k] + '</option>'; }).join('');
+    $(id).addEventListener('change', renderCloud);
+  });
+  $('cmode').addEventListener('change', renderCloud);
+  (function () {
+    var s = D.scatter, hi = 0, lo = 0, nh = 0, nl = 0, top = D.scatter.pd.slice().sort(function (a, b) { return a - b; });
+    var q = top[Math.floor(top.length * 0.9)];
+    s.pd.forEach(function (p, i) { if (p >= q) { hi += s.actual[i]; nh++; } else { lo += s.actual[i]; nl++; } });
+    $('t-cloud').textContent = 'The riskiest tenth by model score defaulted ' + pct(hi / nh) + ' of the time. Everyone else defaulted ' + pct(lo / nl) + '.';
+  })();
+  function renderCloud() {
+    var s = D.scatter, x = $('cx').value, y = $('cy').value, z = $('cz').value, t = T(), data;
+    var tip = function (i) { return 'Predicted risk ' + pct(s.pd[i]); };
+    if ($('cmode').value === 'actual') {
+      var i0 = [], i1 = [];
+      s.actual.forEach(function (a, i) { (a ? i1 : i0).push(i); });
+      var tr = function (idx, name, color, size, op) {
+        return { type: 'scatter3d', mode: 'markers', name: name, showlegend: true,
+          x: idx.map(function (i) { return s[x][i]; }), y: idx.map(function (i) { return s[y][i]; }), z: idx.map(function (i) { return s[z][i]; }),
+          text: idx.map(tip), hovertemplate: '%{text}<extra>' + name + '</extra>',
+          marker: { size: size, color: color, opacity: op, line: { width: 0 } } };
+      };
+      data = [tr(i0, 'Repaid', t.lilac, 3, 0.6), tr(i1, 'Defaulted', t.pink, 3.6, 0.95)];
+    } else {
+      data = [{ type: 'scatter3d', mode: 'markers', x: s[x], y: s[y], z: s[z], text: s.pd.map(tip),
+        hovertemplate: '%{text}<extra></extra>',
+        marker: { size: 3.2, opacity: 0.9, color: s.pd, colorscale: SCALE, cmin: 0, cmax: Math.max.apply(null, s.pd),
+          colorbar: { title: { text: 'Risk', font: { color: t.muted } }, thickness: 10, len: 0.55, tickformat: '.0%', tickfont: { color: t.muted } } } }];
+    }
+    Plotly.react('p-cloud', data, layout('p-cloud', { xaxis: axis(CL[x]), yaxis: axis(CL[y]), zaxis: axis(CL[z]) },
+      { x: 1.7, y: 1.5, z: 0.9 }, { showlegend: $('cmode').value === 'actual', legend: legendBox() }), CFG);
+  }
+
+  /* ---------- 2. risk surface ---------- */
+  var S = D.surface, sj = $('sj'), allz = [].concat.apply([], S.frames.map(function (f) { return [].concat.apply([], f.z); }));
+  var zmin = Math.min.apply(null, allz) * 100, zmax = Math.max.apply(null, allz) * 100;
+  sj.max = S.frames.length - 1;
+  (function () {
+    var f = S.frames[Math.floor(S.frames.length / 2)].z, nA = S.age.length, nI = S.income.length;
+    var mean = function (a) { return a.reduce(function (x, y) { return x + y; }, 0) / a.length * 100; };
+    var byAge = function (j) { return mean(f.map(function (r) { return r[j]; })); };
+    var byInc = function (i) { return mean(f[i]); };
+    $('t-surf').textContent = 'Averaged over income, predicted risk is ' + byAge(0).toFixed(0) + '% at age ' + S.age[0] + ' and ' + byAge(nA - 1).toFixed(0) +
+      '% at age ' + S.age[nA - 1] + '. Averaged over age, it is ' + byInc(0).toFixed(0) + '% at R$ ' + fmt(S.income[0]) + ' a month and ' + byInc(nI - 1).toFixed(0) + '% at R$ ' + fmt(S.income[nI - 1]) + '.';
+  })();
+  function renderSurface() {
+    var f = S.frames[+sj.value];
+    $('sjl').textContent = 'Months at current address: ' + f.months;
+    Plotly.react('p-surf', [{ type: 'surface', x: S.age, y: S.income, z: f.z.map(function (r) { return r.map(function (v) { return v * 100; }); }),
+      colorscale: SCALE, cmin: zmin, cmax: zmax, hovertemplate: 'Age %{x}<br>Income R$ %{y}<br>Risk %{z:.1f}%<extra></extra>',
+      contours: { z: { show: true, usecolormap: true, project: { z: true } } },
+      lighting: { ambient: 0.8, diffuse: 0.6, specular: 0.15, roughness: 0.7 },
+      colorbar: { title: { text: 'Risk %', font: { color: T().muted } }, thickness: 10, len: 0.55, tickfont: { color: T().muted } } }],
+      layout('p-surf', { xaxis: axis('Age (years)'), yaxis: axis('Monthly income (R$)'),
+        zaxis: axis('Default risk (%)', { range: [Math.floor(zmin) - 1, Math.ceil(zmax) + 1] }),
+        aspectmode: 'manual', aspectratio: { x: 1.2, y: 1.2, z: 0.8 } }, { x: 1.6, y: -1.6, z: 0.9 }), CFG);
+  }
+  sj.addEventListener('input', renderSurface);
+  var sjTimer = null;
+  $('sjplay').addEventListener('click', function () {
+    if (sjTimer) { clearInterval(sjTimer); sjTimer = null; this.textContent = 'Play through time at address'; return; }
+    this.textContent = 'Stop';
+    var btn = this;
+    sjTimer = setInterval(function () { sj.value = (+sj.value + 1) % S.frames.length; renderSurface(); }, 1100);
+  });
+
+  /* ---------- 3. cutoff explorer ---------- */
+  var C = D.cutoffs, rc = $('rc'); rc.max = C.length - 1; rc.value = C.findIndex(function (c) { return c.cut >= 0.3; });
+  function renderRoc() {
+    var c = C[+rc.value], R = D.roc, t = T();
+    $('rcl').textContent = 'Decline applicants scoring above ' + pct(c.cut);
+    $('t-roc').textContent = 'At a ' + pct(c.cut) + ' cutoff you approve ' + pct(c.approve) + ' of applicants and ' + pct(c.bad_in_approved) +
+      ' of those approved still default. You turn away ' + pct(c.bads_caught) + ' of future defaulters and ' + pct(c.goods_lost) + ' of good customers.';
+    $('ro').innerHTML =
+      '<div class="readout"><b>' + pct(c.approve) + '</b><span>approved</span></div>' +
+      '<div class="readout"><b>' + pct(c.bad_in_approved) + '</b><span>of approved default</span></div>' +
+      '<div class="readout"><b>' + pct(c.bads_caught) + '</b><span>defaulters declined</span></div>' +
+      '<div class="readout"><b>' + pct(c.goods_lost) + '</b><span>good customers declined</span></div>';
+    var zeros = R.fpr.map(function () { return 0; });
+    var data = [
+      { type: 'scatter3d', mode: 'lines', x: R.fpr, y: R.tpr, z: R.thr, hovertemplate: 'Goods declined %{x:.0%}<br>Defaulters declined %{y:.0%}<br>Cutoff %{z:.0%}<extra></extra>',
+        line: { width: 7, color: R.thr, colorscale: SCALE, cmin: 0, cmax: 1 } },
+      { type: 'scatter3d', mode: 'lines', x: R.fpr, y: R.tpr, z: zeros, hoverinfo: 'skip', line: { width: 3, color: t.line } },
+      { type: 'scatter3d', mode: 'lines', x: [0, 1], y: [0, 1], z: [0, 0], hoverinfo: 'skip', line: { width: 2, color: t.muted, dash: 'dash' } },
+      { type: 'scatter3d', mode: 'lines', x: [c.goods_lost, c.goods_lost], y: [c.bads_caught, c.bads_caught], z: [0, c.cut], hoverinfo: 'skip', line: { width: 4, color: t.pink } },
+      { type: 'scatter3d', mode: 'markers', x: [c.goods_lost], y: [c.bads_caught], z: [c.cut], hoverinfo: 'skip',
+        marker: { size: 9, color: t.pink, line: { color: t.surface, width: 2 } } }];
+    Plotly.react('p-roc', data, layout('p-roc', { xaxis: axis('Good customers declined', { range: [0, 1], tickformat: '.0%' }),
+      yaxis: axis('Defaulters declined', { range: [0, 1], tickformat: '.0%' }),
+      zaxis: axis('Score cutoff', { range: [0, 1], tickformat: '.0%' }), aspectmode: 'manual', aspectratio: { x: 1, y: 1, z: 0.8 } },
+      { x: 1.7, y: -1.5, z: 0.8 }), CFG);
+  }
+  rc.addEventListener('input', renderRoc);
+  var rcTimer = null;
+  $('rcplay').addEventListener('click', function () {
+    if (rcTimer) { clearInterval(rcTimer); rcTimer = null; this.textContent = 'Sweep the cutoff'; return; }
+    this.textContent = 'Stop'; rc.value = 0;
+    rcTimer = setInterval(function () { rc.value = (+rc.value + 1) % C.length; renderRoc(); }, 90);
+  });
+
+  /* ---------- 3D bar builder ---------- */
+  var TRI = [[0,1,2],[0,2,3],[4,5,6],[4,6,7],[0,1,5],[0,5,4],[1,2,6],[1,6,5],[2,3,7],[2,7,6],[3,0,4],[3,4,7]];
+  function boxes(cells, w) {
+    var o = { x: [], y: [], z: [], i: [], j: [], k: [], inten: [], text: [], base: [] };
+    cells.forEach(function (c) {
+      var d = (1 - w) / 2, x0 = c.x + d, x1 = x0 + w, y0 = c.y + d, y1 = y0 + w, n = o.x.length;
+      var xs = [x0, x1, x1, x0, x0, x1, x1, x0], ys = [y0, y0, y1, y1, y0, y0, y1, y1];
+      for (var v = 0; v < 8; v++) { o.x.push(xs[v]); o.y.push(ys[v]); o.base.push(v < 4 ? 0 : c.h); o.z.push(v < 4 ? 0 : c.h); o.inten.push(c.v); o.text.push(c.tip); }
+      TRI.forEach(function (tr) { o.i.push(n + tr[0]); o.j.push(n + tr[1]); o.k.push(n + tr[2]); });
+    });
+    return o;
+  }
+  function growth(id, traceIdx, bases) {
+    if (REDUCED) return;
+    var t0 = performance.now(), dur = 1100;
+    (function step(now) {
+      var p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      Plotly.restyle(id, { z: bases.map(function (b) { return b.map(function (v) { return v * e; }); }) }, traceIdx);
+      if (p < 1) requestAnimationFrame(step);
+    })(t0);
+  }
+  var grown = {};
+
+  /* ---------- 4. default-rate bars ---------- */
+  var B = D.bars, barBases = null;
+  (function () {
+    var top = B.cells.slice().sort(function (a, b) { return b.rate - a.rate; })[0], low = B.cells.slice().sort(function (a, b) { return a.rate - b.rate; })[0];
+    $('t-bars').textContent = 'Profession ' + B.rows[top.i] + ' with occupation type ' + B.cols[top.j] + ' defaults ' + pct(top.rate) + ' of the time. Profession ' + B.rows[low.i] + ' with type ' + B.cols[low.j] + ' defaults ' + pct(low.rate) + '.';
+  })();
+  function renderBars() {
+    var t = T(), lo = Math.min.apply(null, B.cells.map(function (c) { return c.rate; })), hi = Math.max.apply(null, B.cells.map(function (c) { return c.rate; }));
+    var cells = B.cells.map(function (c) { return { x: c.i, y: c.j, h: c.rate * 100, v: c.rate,
+      tip: 'Profession ' + B.rows[c.i] + ', occupation type ' + B.cols[c.j] + '<br>Default rate ' + pct(c.rate, 1) + '<br>' + fmt(c.n) + ' applicants' }; });
+    var m = boxes(cells, 0.72); barBases = [m.base];
+    var bar = { type: 'mesh3d', x: m.x, y: m.y, z: m.z, i: m.i, j: m.j, k: m.k, intensity: m.inten, intensitymode: 'vertex',
+      colorscale: SCALE, cmin: lo * 0.9, cmax: hi, flatshading: true, text: m.text, hovertemplate: '%{text}<extra></extra>',
+      lighting: { ambient: 0.75, diffuse: 0.7, specular: 0.2, roughness: 0.6 },
+      colorbar: { title: { text: 'Default rate', font: { color: t.muted } }, thickness: 10, len: 0.55, tickformat: '.0%', tickfont: { color: t.muted } } };
+    var oh = B.overall * 100, nR = B.rows.length, nC = B.cols.length;
+    var plane = { type: 'mesh3d', x: [0, nR, nR, 0], y: [0, 0, nC, nC], z: [oh, oh, oh, oh], i: [0, 0], j: [1, 2], k: [2, 3],
+      color: t.pink, opacity: 0.22, hoverinfo: 'skip', flatshading: true };
+    Plotly.react('p-bars', [bar, plane], layout('p-bars', {
+      xaxis: axis('Profession code', { tickvals: B.rows.map(function (_, i) { return i + 0.5; }), ticktext: B.rows.map(String), range: [0, nR] }),
+      yaxis: axis('Occupation type', { tickvals: B.cols.map(function (_, i) { return i + 0.5; }), ticktext: B.cols.map(String), range: [0, nC] }),
+      zaxis: axis('Default rate (%)', { range: [0, Math.ceil(hi * 100 / 5) * 5 + 5] }),
+      aspectmode: 'manual', aspectratio: { x: 1.4, y: 1, z: 0.7 } }, { x: 1.7, y: -1.6, z: 0.9 }), CFG);
+  }
+  $('barsreplay').addEventListener('click', function () { growth('p-bars', [0], barBases); });
+
+  /* ---------- 5. drivers ---------- */
+  var V = D.drivers, drvBases = [];
+  (function () {
+    var f = V.features;
+    $('t-drv').textContent = 'The boosting model relies most on ' + f[0] + ', then ' + f[1] + ' and ' + f[2] + '. Bars that are tall in all three rows are the safest bets.';
+    $('drvlist').innerHTML = f.map(function (n, i) { return '<li><span class="n">' + (i + 1) + '</span><span><code>' + n + '</code><small>' + (V.descriptions[i] || '') + '</small></span></li>'; }).join('');
+  })();
+  function renderDrivers() {
+    var t = T(), series = [['gbm', 'Boosting importance', t.pink], ['lr', 'Scorecard importance', t.violet], ['iv', 'Information value', t.lilac]];
+    drvBases = [];
+    var traces = series.map(function (s, r) {
+      var cells = V.features.map(function (f, i) { return { x: i, y: r, h: V[s[0]][i], v: V[s[0]][i],
+        tip: '<b>' + f + '</b><br>' + s[1] + ': ' + V[s[0] + '_raw'][i] }; });
+      var m = boxes(cells, 0.62); drvBases.push(m.base);
+      return { type: 'mesh3d', x: m.x, y: m.y, z: m.z, i: m.i, j: m.j, k: m.k, color: s[2], flatshading: true, name: s[1], showlegend: true,
+        text: m.text, hovertemplate: '%{text}<extra></extra>', lighting: { ambient: 0.7, diffuse: 0.75, specular: 0.25, roughness: 0.5 } };
+    });
+    Plotly.react('p-drv', traces, layout('p-drv', {
+      xaxis: axis('Rank of variable', { tickvals: V.features.map(function (_, i) { return i + 0.5; }), ticktext: V.features.map(function (_, i) { return String(i + 1); }), range: [0, V.features.length] }),
+      yaxis: axis('', { tickvals: [0.5, 1.5, 2.5], ticktext: ['Boosting', 'Scorecard', 'Info value'], range: [0, 3] }),
+      zaxis: axis('Relative strength (max = 1)', { range: [0, 1.05] }), aspectmode: 'manual', aspectratio: { x: 1.5, y: 0.9, z: 0.7 } },
+      { x: 1.6, y: -1.7, z: 0.9 }, { showlegend: true, legend: legendBox() }), CFG);
+  }
+  $('drvreplay').addEventListener('click', function () { growth('p-drv', [0, 1, 2], drvBases); });
+
+  /* ---------- notes ---------- */
+  $('dec').innerHTML = '<thead><tr><th>Risk group</th><th>Predicted</th><th>Actual</th><th></th></tr></thead><tbody>' +
+    D.deciles.map(function (d) { return '<tr><td>' + d.decile + (d.decile === 1 ? ' (lowest)' : d.decile === 10 ? ' (highest)' : '') + '</td><td>' + pct(d.pd, 1) + '</td><td>' + pct(d.actual, 1) + '</td><td style="text-align:left"><span class="bar" style="width:' + Math.round(d.actual * 160) + 'px"></span></td></tr>'; }).join('') + '</tbody>';
+  $('steps').innerHTML =
+    '<li><b>Clean.</b> Read the tab-separated file, treated NULL and blank cells as missing, renamed the mate\'s education column, and dropped ' + D.dropped.length + ' columns that never change.</li>' +
+    '<li><b>Engineer.</b> Log income and assets, income per dependant, assets to income, job tenure as a share of life, card count, and frequency codes for place names.</li>' +
+    '<li><b>Split.</b> ' + fmt(D.n_train) + ' applicants to train, ' + fmt(D.n_test) + ' held out, split so both keep the same default rate.</li>' +
+    '<li><b>Model.</b> A gradient boosting model and a regularised logistic scorecard as the interpretable benchmark.</li>' +
+    '<li><b>Explain.</b> Permutation importance, information value, decile table, and the cutoff trade-off above.</li>';
+  $('caveat').textContent = 'An AUC near ' + D.gbm.auc.toFixed(2) + ' is modest, which is typical when a score uses only application-form fields and no repayment history. Use it to rank applicants, and test it on fresh data before relying on a cutoff.';
+
+  /* ---------- render ---------- */
+  var charts = [['p-cloud', renderCloud], ['p-surf', renderSurface], ['p-roc', renderRoc], ['p-bars', renderBars], ['p-drv', renderDrivers]];
+  function renderAll() { charts.forEach(function (c) { c[1](); }); }
+  renderAll();
+  var gio = 'IntersectionObserver' in window ? new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (e.isIntersecting && !grown[e.target.id]) {
+        grown[e.target.id] = true;
+        if (e.target.id === 'p-bars') growth('p-bars', [0], barBases);
+        if (e.target.id === 'p-drv') growth('p-drv', [0, 1, 2], drvBases);
+      }
+    });
+  }, { threshold: 0.5 }) : null;
+  if (gio) { gio.observe($('p-bars')); gio.observe($('p-drv')); }
+
+  var rerender = function () { setTimeout(renderAll, 60); };
+  if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', rerender);
+  new MutationObserver(rerender).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+})();
+</script>

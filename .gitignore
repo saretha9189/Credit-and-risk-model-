@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+artifacts/prediction_log.jsonl
+.pytest_cache/
+
+# Dataset provided by the course lecturer - do not publish
+data/CS_data.txt
+data/*.xls
+
+artifacts/*.joblib
+artifacts/*.pkl
+artifacts/*.jsonl
+example_request.json

@@ -1,0 +1,32 @@
+[
+  {
+    "week": 4,
+    "level": "CRITICAL",
+    "check": "feature",
+    "detail": "PERSONAL_MONTHLY_INCOME PSI 0.558"
+  },
+  {
+    "week": 5,
+    "level": "CRITICAL",
+    "check": "feature",
+    "detail": "PERSONAL_MONTHLY_INCOME PSI 0.856"
+  },
+  {
+    "week": 5,
+    "level": "WARN",
+    "check": "quality",
+    "detail": "PROFESSION_CODE missing +30pp"
+  },
+  {
+    "week": 6,
+    "level": "CRITICAL",
+    "check": "feature",
+    "detail": "PERSONAL_MONTHLY_INCOME PSI 1.204"
+  },
+  {
+    "week": 6,
+    "level": "WARN",
+    "check": "quality",
+    "detail": "PROFESSION_CODE missing +28pp"
+  }
+]

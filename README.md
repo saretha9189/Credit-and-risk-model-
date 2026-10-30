@@ -1,0 +1,62 @@
+# Credit Risk Studio
+
+A credit-risk model for 50,000 credit card applicants, explained with animated 3D charts in pink and purple.
+
+## Run it
+```
+pip install -r requirements.txt
+python main.py             # trains both models and writes outputs/dashboard.html
+python main.py --serve     # same, then opens http://localhost:8000/dashboard.html
+```
+Or just open `outputs/dashboard.html` in a browser (it loads Plotly.js from a CDN, so you need internet).
+
+## Layout
+| File | Job |
+|---|---|
+| `src/data.py` | Load the tab-separated file, treat NULL/blank as missing, rename the mate's `EDUCATION_LEVEL`, drop constant columns |
+| `src/features.py` | Feature engineering (log income/assets, ratios, frequency codes) |
+| `src/model.py` | Gradient boosting + logistic scorecard, AUC/Gini/KS, permutation importance, information value |
+| `src/analysis.py` | Turns the models into the numbers each 3D chart draws |
+| `src/viz3d.py`, `src/templates/` | Builds the 3D dashboard page |
+| `main.py` | Runs everything |
+
+## The five 3D views
+1. Applicant cloud: 1,800 held-out applicants, coloured by outcome or predicted risk, with selectable axes.
+2. Risk surface: predicted default risk by age and income, animated over months at address.
+3. Cutoff explorer: 3D ROC curve with a movable approval cutoff.
+4. Segment bars: default rate by profession and occupation type.
+5. Driver bars: variable importance from three angles.
+
+---
+
+## From notebook to production: serving and monitoring (`mlops/`)
+
+The model above is wrapped in the pieces a production data/AI team needs. Nothing in `src/` was changed.
+
+```
+pip install -r requirements.txt -r requirements-mlops.txt
+python -m mlops.train_and_register   # train, write artifacts/model_bundle.joblib + model_card.json
+python -m mlops.serve                # scoring API on :8080  (GET /health, POST /score)
+python -m mlops.monitor              # 6-week drift simulation -> outputs/monitoring_report.png
+python -m pytest -q                  # 12 tests; CI runs them on every push
+```
+
+| Piece | What it does |
+|---|---|
+| `mlops/train_and_register.py` | Fits the feature builder on training data only, saves model + versioned model card (metrics, data hash, limits, monitoring thresholds) |
+| `mlops/schema.py` | Data-quality gate: range checks, missing-field limit, string normalisation. Bad input gets HTTP 422, never a silent score |
+| `mlops/serve.py` | Scoring service (standard library only). Returns probability of default, approve/decline at the policy cutoff and model version; logs every score |
+| `mlops/reference.py` | Population Stability Index (PSI) for every feature and the score, plus missing-rate shift |
+| `mlops/monitor.py` | Weekly drift, data-quality and performance checks with warn/critical thresholds; AUC alerts use a 3-standard-error rule so small batches do not raise noise alarms |
+
+### What the simulation shows
+The data has no dates, so production is **simulated**: six batches of unseen applicants, clean for weeks 1-3, then incomes fall 15/30/40%, a feed breaks (`PROFESSION_CODE` 35% missing) and applicants skew younger.
+- Income PSI jumps from ~0.02 to 0.56 in week 4 and the missing-value alert fires in week 5, so both problems are caught the week they start.
+- Score PSI and AUC barely move: this model leans little on income, so **feature drift is not the same as model damage**. The approval rate does fall (68% to 57%) in week 6, which is the business-impact signal to watch.
+- Lesson learned: my first reference distribution used training rows and raised false alarms (PSI > 1 on a frequency-encoded feature, because ~16% of unseen applicants have categories never seen in training). The reference now comes from out-of-sample validation data.
+
+### Limits
+Drift is injected, not observed; AUC is about 0.65; no fairness or adverse-impact testing yet. See `artifacts/model_card.json`.
+
+## Data
+The dataset (`data/CS_data.txt`) was provided by the course lecturer and is **not included in this repository**. Place the file at `data/CS_data.txt` to run the pipeline.

@@ -1,0 +1,29 @@
+{
+  "model_version": "20261101-202041",
+  "algorithm": "HistGradientBoostingClassifier",
+  "training_rows": 37500,
+  "holdout_rows": 12500,
+  "reference_rows": 2500,
+  "simulated_traffic_rows": 10000,
+  "training_data_sha256": "c2e7f732b1dae8ea",
+  "holdout_metrics": {
+    "auc": 0.6489,
+    "gini": 0.2978,
+    "ks": 0.217,
+    "brier": 0.1825,
+    "ap": 0.3816
+  },
+  "decision_cutoff": 0.3,
+  "intended_use": "Rank credit card applicants by default risk (coursework / portfolio demonstration).",
+  "known_limitations": [
+    "No time dimension in the data, so production drift is simulated",
+    "Moderate discrimination (AUC ~0.65): suitable as a risk ranking, not a sole decision-maker",
+    "No fairness or adverse-impact analysis yet"
+  ],
+  "monitoring": {
+    "score_psi": "warn >0.10, critical >0.25",
+    "feature_psi": "warn >0.10, critical >0.25",
+    "performance": "warn if AUC falls >0.02 below holdout",
+    "data_quality": "warn if a field's missing rate moves >10 percentage points"
+  }
+}
