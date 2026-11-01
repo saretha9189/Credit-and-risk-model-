@@ -12,7 +12,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 from src import analysis
-from src.config import OUT_DIR, SEED, TEST_SIZE
+from src.config import DATA_FILE, OUT_DIR, SEED, TEST_SIZE, USING_DEMO
 from src.data import TARGET, drop_uninformative, load_raw, variable_descriptions
 from src.features import FeatureBuilder
 from src.model import (build_gbm, build_logit, information_value, metrics, perm_importance)
@@ -21,6 +21,7 @@ from src.viz3d import write_dashboard
 
 def run():
     OUT_DIR.mkdir(exist_ok=True)
+    print(f"data: {DATA_FILE.name}" + ("  (SYNTHETIC demo data: put the real file at data/CS_data.txt to use it)" if USING_DEMO else ""))
     raw_full = load_raw()
     df, constant = drop_uninformative(raw_full)
     print(f"{len(df):,} applicants, {df.shape[1] - 1} usable variables, bad rate {df[TARGET].mean():.1%}")

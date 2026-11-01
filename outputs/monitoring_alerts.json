@@ -1,32 +1,38 @@
 [
   {
     "week": 4,
-    "level": "CRITICAL",
+    "level": "WARN",
     "check": "feature",
-    "detail": "PERSONAL_MONTHLY_INCOME PSI 0.558"
+    "detail": "PERSONAL_MONTHLY_INCOME PSI 0.121"
   },
   {
     "week": 5,
     "level": "CRITICAL",
     "check": "feature",
-    "detail": "PERSONAL_MONTHLY_INCOME PSI 0.856"
+    "detail": "PERSONAL_MONTHLY_INCOME PSI 0.669"
   },
   {
     "week": 5,
     "level": "WARN",
     "check": "quality",
-    "detail": "PROFESSION_CODE missing +30pp"
+    "detail": "PROFESSION_CODE missing +35pp"
+  },
+  {
+    "week": 6,
+    "level": "CRITICAL",
+    "check": "score",
+    "detail": "score PSI 0.378"
   },
   {
     "week": 6,
     "level": "CRITICAL",
     "check": "feature",
-    "detail": "PERSONAL_MONTHLY_INCOME PSI 1.204"
+    "detail": "PERSONAL_MONTHLY_INCOME PSI 1.070"
   },
   {
     "week": 6,
     "level": "WARN",
     "check": "quality",
-    "detail": "PROFESSION_CODE missing +28pp"
+    "detail": "PROFESSION_CODE missing +32pp"
   }
 ]

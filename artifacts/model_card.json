@@ -1,17 +1,17 @@
 {
-  "model_version": "20261101-202041",
+  "model_version": "20261101-203538",
   "algorithm": "HistGradientBoostingClassifier",
-  "training_rows": 37500,
-  "holdout_rows": 12500,
-  "reference_rows": 2500,
-  "simulated_traffic_rows": 10000,
-  "training_data_sha256": "c2e7f732b1dae8ea",
+  "training_rows": 15000,
+  "holdout_rows": 5000,
+  "reference_rows": 1000,
+  "simulated_traffic_rows": 4000,
+  "training_data_sha256": "b4d837e8a5b4ec44",
   "holdout_metrics": {
-    "auc": 0.6489,
-    "gini": 0.2978,
-    "ks": 0.217,
-    "brier": 0.1825,
-    "ap": 0.3816
+    "auc": 0.6548,
+    "gini": 0.3097,
+    "ks": 0.234,
+    "brier": 0.1809,
+    "ap": 0.3995
   },
   "decision_cutoff": 0.3,
   "intended_use": "Rank credit card applicants by default risk (coursework / portfolio demonstration).",

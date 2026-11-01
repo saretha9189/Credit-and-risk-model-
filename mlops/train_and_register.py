@@ -9,13 +9,13 @@ import time
 import joblib
 from sklearn.model_selection import train_test_split
 
-from src.config import DATA_FILE, ROOT, SEED, TEST_SIZE
+from src.config import ARTIFACT_DIR, DATA_FILE, SEED, TEST_SIZE
 from src.data import TARGET, drop_uninformative, load_raw
 from src.features import FeatureBuilder
 from src.model import build_gbm, metrics
 from mlops.reference import build_reference
 
-ARTIFACTS = ROOT / "artifacts"
+ARTIFACTS = ARTIFACT_DIR
 APPROVE_CUTOFF = 0.30   # decline above this predicted probability of default (policy choice, tune in the dashboard)
 
 

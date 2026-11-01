@@ -14,10 +14,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import joblib
 import numpy as np
 
-from src.config import ROOT
+from src.config import ARTIFACT_DIR
 from mlops.schema import ValidationError, clean_records
 
-ARTIFACTS = ROOT / "artifacts"
+ARTIFACTS = ARTIFACT_DIR
 
 
 class Scorer:

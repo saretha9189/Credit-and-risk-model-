@@ -13,3 +13,5 @@ artifacts/*.joblib
 artifacts/*.pkl
 artifacts/*.jsonl
 example_request.json
+outputs_local/
+artifacts_local/

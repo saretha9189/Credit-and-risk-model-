@@ -15,12 +15,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from src.config import ROOT, SEED
+from src.config import ARTIFACT_DIR, OUT_DIR, SEED
 from src.data import TARGET
 from src.model import metrics
 from mlops.reference import feature_psi, missing_shift, score_psi
 
-ARTIFACTS, OUT = ROOT / "artifacts", ROOT / "outputs"
+ARTIFACTS, OUT = ARTIFACT_DIR, OUT_DIR
 WARN, CRIT = 0.10, 0.25
 AUC_DROP_WARN = 0.02  # and > 3 standard errors
 MISSING_WARN_PP = 10.0
